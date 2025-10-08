@@ -229,7 +229,7 @@ if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = [
         {
             "role": "assistant",
-            "content": "<span style='color:#8B0000; font-weight:bold;'>Xin kính chào Quý người dùng! Tôi là trợ lý Gemini, sẵn sàng hỗ trợ Quý vị trong việc phân tích và tư vấn tài chính chuyên sâu. 💼</span>"
+            "content": "Xin kính chào Quý người dùng! Tôi là trợ lý Gemini, sẵn sàng hỗ trợ Quý vị trong việc phân tích và tư vấn tài chính chuyên sâu. 💼"
         }
     ]
 # Hiển thị lịch sử chat
