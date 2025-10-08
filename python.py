@@ -227,9 +227,11 @@ st.sidebar.markdown("## 💬 Chat tài chính với Gemini")
 # Khởi tạo lịch sử chat trong session_state
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = [
-        {"role": "assistant", "content": "Chào mày! Hỏi gì về phân tích tài chính nói tao nghe 😎"}
+        {
+            "role": "assistant",
+            "content": "<span style='color:#8B0000; font-weight:bold;'>Xin kính chào Quý người dùng! Tôi là trợ lý Gemini, sẵn sàng hỗ trợ Quý vị trong việc phân tích và tư vấn tài chính chuyên sâu. 💼</span>"
+        }
     ]
-
 # Hiển thị lịch sử chat
 for msg in st.session_state.chat_messages:
     with st.sidebar.chat_message("assistant" if msg["role"] == "assistant" else "user"):
