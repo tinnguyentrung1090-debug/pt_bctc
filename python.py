@@ -183,3 +183,81 @@ if uploaded_file is not None:
 
 else:
     st.info("Vui lòng tải lên file Excel để bắt đầu phân tích.")
+    # --- Chat trực tiếp với Gemini (giữ lịch sử hội thoại) ---
+def chat_with_gemini(user_text, history, api_key, model_name='gemini-2.5-flash'):
+    """
+    Gửi câu hỏi + lịch sử chat tới Gemini và trả về câu trả lời.
+    history: list[{"role": "user"|"assistant", "content": str}]
+    """
+    try:
+        client = genai.Client(api_key=api_key)
+
+        # Ghép lịch sử hội thoại thành văn bản
+        hist_text = "\n".join(
+            [f"{'Người dùng' if m['role']=='user' else 'Gemini'}: {m['content']}" for m in history]
+        )
+
+        system_prompt = (
+            "Bạn là trợ lý tài chính nói ngắn gọn, mạch lạc. "
+            "Nếu người dùng nhắc tới các bảng/kết quả phía App (dataframe, chỉ số), "
+            "hãy giải thích dựa trên kiến thức tài chính cơ bản, KHÔNG bịa số liệu nếu không có."
+        )
+
+        contents = f"""{system_prompt}
+
+Lịch sử hội thoại:
+{hist_text}
+
+Người dùng: {user_text}
+Gemini:"""
+
+        resp = client.models.generate_content(
+            model=model_name,
+            contents=contents
+        )
+        return (resp.text or "").strip()
+
+    except APIError as e:
+        return f"Lỗi gọi Gemini API: {e}"
+    except Exception as e:
+        return f"Đã xảy ra lỗi không xác định khi chat: {e}"
+# --- Khung Chat với Gemini (luôn hiển thị ở Sidebar) ---
+st.sidebar.markdown("## 💬 Chat tài chính với Gemini")
+
+# Khởi tạo lịch sử chat trong session_state
+if "chat_messages" not in st.session_state:
+    st.session_state.chat_messages = [
+        {"role": "assistant", "content": "Chào mày! Hỏi gì về phân tích tài chính nói tao nghe 😎"}
+    ]
+
+# Hiển thị lịch sử chat
+for msg in st.session_state.chat_messages:
+    with st.sidebar.chat_message("assistant" if msg["role"] == "assistant" else "user"):
+        st.write(msg["content"])
+
+# Ô nhập chat
+user_input = st.sidebar.chat_input("Nhập câu hỏi (ví dụ: Ý nghĩa 'thanh toán hiện hành' là gì?)")
+
+if user_input:
+    # Hiển thị ngay câu hỏi của user
+    with st.sidebar.chat_message("user"):
+        st.write(user_input)
+    st.session_state.chat_messages.append({"role": "user", "content": user_input})
+
+    # Lấy API key
+    api_key = st.secrets.get("GEMINI_API_KEY")
+    if not api_key:
+        assistant_reply = "Không tìm thấy khóa GEMINI_API_KEY trong st.secrets. Vui lòng cấu hình trước nhé!"
+    else:
+        # Gọi Gemini với lịch sử hội thoại
+        assistant_reply = chat_with_gemini(
+            user_text=user_input,
+            history=st.session_state.chat_messages,
+            api_key=api_key
+        )
+
+    # Hiển thị trả lời và lưu lịch sử
+    with st.sidebar.chat_message("assistant"):
+        st.write(assistant_reply)
+    st.session_state.chat_messages.append({"role": "assistant", "content": assistant_reply})
+
